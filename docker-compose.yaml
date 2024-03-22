@@ -1,0 +1,51 @@
+services:
+  discoveryserver:
+    image: nutsfoundation/nuts-node:6.0.0-alpha.2
+    environment:
+      NUTS_URL: https://discoveryserver  # irrelevant for Discovery Server: does not perform OAuth2 flows
+      NUTS_STRICTMODE: false
+      NUTS_DATADIR: /opt/nuts/data
+      NUTS_STORAGE_SQL_CONNECTION: postgres://postgres:postgres@discoveryserver_db:5432/discoveryserver?sslmode=disable
+      NUTS_DISCOVERY_DEFINITIONS_DIRECTORY: /opt/nuts/discovery
+      NUTS_DISCOVERY_SERVER_IDS: debate_club
+    volumes:
+      - "./config/debate_club.json:/opt/nuts/discovery/debate_club.json:ro"
+      # did:web resolver uses the OS CA bundle, but this setup uses a self-signed CA which can be found in config/truststore.pem
+      # So we need to mount that file to the OS CA bundle location, otherwise did:web resolving will fail due to untrusted certs.
+      - "./config/truststore.pem:/etc/ssl/certs/SelfSigned_RootCA.pem:ro"
+      - "./data/discoveryserver:/opt/nuts/data" # not strictly required, but at least IRMA schemes are then cached
+    depends_on:
+      discoveryserver_db:
+        condition: service_healthy
+  discoveryserver_db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ] # this makes sure the container only reports healthy it can be connected to
+      interval: 1s
+      timeout: 5s
+      retries: 20
+  awesome_college_node:
+    image: nutsfoundation/nuts-node:6.0.0-alpha.2
+    ports:
+      - "8081:8081" # port exposed for loading test data (create DIDs and VCs, requesting access token)
+      - "8080:8080"
+    volumes:
+      - "./data/awesome_college:/opt/nuts/data"
+      - "./config/debate_club.json:/opt/nuts/discovery/debate_club.json:ro"
+    environment:
+      NUTS_STRICTMODE: false             # to allow loading unconfigured JSON-LD contexts
+      NUTS_URL: https://awesome_college  # used for did:web resolving
+      NUTS_DATADIR: /opt/nuts/data
+      NUTS_HTTP_INTERNAL_ADDRESS: :8081
+      NUTS_DISCOVERY_DEFINITIONS_DIRECTORY: /opt/nuts/discovery
+  awesome_college:
+    image: nginx:1.25.1
+    volumes:
+      - "./config/nginx-awesome_college.conf:/etc/nginx/conf.d/awesome_college.conf:ro"
+      - "./config/awesome_college-certificate.pem:/etc/nginx/ssl/server.pem:ro"
+      - "./config/awesome_college-certificate.pem:/etc/nginx/ssl/key.pem:ro"

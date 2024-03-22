@@ -1,0 +1,54 @@
+{
+  "id": "debate_club",
+  "endpoint": "http://discoveryserver:8080/discovery/debate_club",
+  "presentation_max_validity": 2764800,
+  "presentation_definition": {
+    "id": "debate_club",
+    "format": {
+      "ldp_vc": {
+        "proof_type": [
+          "JsonWebSignature2020"
+        ]
+      },
+      "jwt_vp": {
+        "alg": ["ES256"]
+      }
+    },
+    "input_descriptors": [
+      {
+        "id": "UniversityDegreeCredential_From_Accredited_Institution",
+        "constraints": {
+          "fields": [
+            {
+              "path": [
+                "$.type"
+              ],
+              "filter": {
+                "type": "string",
+                "const": "UniversityDegreeCredential"
+              }
+            },
+            {
+              "path": [
+                "$.issuer"
+              ],
+              "filter": {
+                "type": "string",
+                "enum": [
+                  "did:web:awesome_college:iam:examinationcommittee",
+                  "did:web:another-college-we-like"
+                ]
+              }
+            },
+            {
+              "id": "degree_type",
+              "path": [
+                "$.credentialSubject.degree.type"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
