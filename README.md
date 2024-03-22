@@ -13,6 +13,15 @@ Start the Docker Compose file. Then either run the .http file using IntelliJ or 
 docker run --rm --network=nuts-discovery-server-example_default -i -t -v './issue-DIDs-and-VCs-docker.http:/workdir/requests.http' jetbrains/intellij-http-client -L VERBOSE requests.http
 ```
 
+This HTTP request script performs the following actions:
+
+1. Create DID for Awesome College
+2. Create DID for the student
+3. Issue a degree credential for the student
+4. Load the degree credential into the student's wallet
+5. Activate the debate club Discovery Service for the student's wallet. This causes a Verifiable Presentation to be registered on the Discovery Service.
+6. Search for registrations on Discovery Service where `credentialSubject.degree.type` is `BachelorDegree` 
+
 ## Components
 
 The Docker Compose setup contains the following components:
